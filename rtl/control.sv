@@ -14,64 +14,94 @@ module control(
     input logic       spi_byte_vld_i,
     input logic [7:0] spi_byte_data_i,
 
-    output logic       gate_st_o,
-    output logic [7:0] gate_time_o,
+    output logic       reg_wr_en_o,
+    output logic [1:0] reg_wr_addr_o,
 
-    output logic [2:0] reg_rd_addr_o
+    output logic [4:0] reg_rd_addr_o
 );
 
 typedef enum logic [7:0] {
-    SET_ST = 8'h2a,
-    REG_RD = 8'h3a
+    CONF_WR = 8'h2a,
+    INFO_RD = 8'h3a,
+    DATA_RD = 8'h3b
 } cmd_t;
 
-logic set_wr_en;
+logic gate_en;
+logic conf_wr;
 
-logic       gate_st;
-logic [7:0] gate_time;
+logic info_rd;
+logic data_rd;
 
-logic [2:0] reg_rd_addr;
+logic [1:0] wr_addr;
+logic [4:0] rd_addr;
 
-assign gate_st_o   = gate_st & spi_byte_vld_i;
-assign gate_time_o = gate_time;
+wire conf_done = (wr_addr == 2'h3);
 
-assign reg_rd_addr_o = reg_rd_addr;
+wire info_done = (rd_addr == 5'h06);
+wire data_done = (rd_addr == 5'h12);
+
+assign reg_wr_en_o   = conf_wr & spi_byte_vld_i;
+assign reg_wr_addr_o = wr_addr;
+
+assign reg_rd_addr_o = rd_addr;
 
 always_ff @(posedge clk_i or negedge rst_n_i)
 begin
     if (!rst_n_i) begin
-        gate_st   <= 1'b0;
-        gate_time <= 8'h00;
+        conf_wr <= 1'b0;
 
-        set_wr_en <= 1'b0;
+        info_rd <= 1'b0;
+        data_rd <= 1'b0;
 
-        reg_rd_addr <= 32'h0000_0000;
+        wr_addr <= 2'h0;
+        rd_addr <= 5'h00;
     end else begin
         if (spi_byte_vld_i) begin
             if (!dc_i) begin  // Command
-                gate_time <= gate_time;
+                wr_addr <= 2'h0;
 
                 case (spi_byte_data_i)
-                    SET_ST: begin
-                        gate_st <= 1'b1;
-    
-                        set_wr_en <= 1'b0;
+                    CONF_WR: begin
+                        conf_wr <= 1'b1;
+
+                        info_rd <= 1'b0;
+                        data_rd <= 1'b0;
+
+                        rd_addr <= 5'h00;
+                    end
+                    INFO_RD: begin
+                        conf_wr <= 1'b0;
+
+                        info_rd <= 1'b1;
+                        data_rd <= 1'b0;
+
+                        rd_addr <= 5'h00;
+                    end
+                    DATA_RD: begin
+                        conf_wr <= 1'b0;
+
+                        info_rd <= 1'b0;
+                        data_rd <= 1'b1;
+
+                        rd_addr <= 5'h08;
                     end
                     default: begin
-                        gate_st <= 1'b0;
-    
-                        set_wr_en <= 1'b0;
+                        conf_wr <= 1'b0;
+
+                        info_rd <= 1'b0;
+                        data_rd <= 1'b0;
+
+                        rd_addr <= 5'h00;
                     end
                 endcase
-
-                reg_rd_addr <= 32'h0000_0000;
             end else begin    // Data
-                set_wr_en <= 1'b0;
+                conf_wr <= conf_done ? 1'b0 : conf_wr;
 
-                gate_st <= 1'b0;
-                gate_time <= set_wr_en ? spi_byte_data_i : gate_time;
+                info_rd <= info_done ? 1'b0 : info_rd;
+                data_rd <= data_done ? 1'b0 : data_rd;
 
-                reg_rd_addr <= reg_rd_addr + 1'b1;
+                wr_addr <= conf_wr ? wr_addr + 1'b1 : 2'h0;
+                rd_addr <= (info_rd | data_rd) ? rd_addr + 1'b1 : 5'h00;
             end
         end
     end

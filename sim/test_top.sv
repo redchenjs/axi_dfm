@@ -24,14 +24,15 @@ logic sig_clk_i;
 logic       spi_byte_vld;
 logic [7:0] spi_byte_data;
 
-logic        reg_wr_en;
-logic [63:0] reg_wr_data;
+logic [31:0] gate_time;
 
-logic [2:0] reg_rd_addr;
+logic        reg_wr_en_a;
+logic        reg_wr_en_b;
+logic  [1:0] reg_wr_addr;
+logic [95:0] reg_wr_data;
+
+logic [4:0] reg_rd_addr;
 logic [7:0] reg_rd_data;
-
-logic       gate_st;
-logic [7:0] gate_time;
 
 spi_slave spi_slave(
     .clk_i(clk_i),
@@ -53,11 +54,15 @@ regfile regfile(
     .clk_i(clk_i),
     .rst_n_i(rst_n_i),
 
-    .reg_wr_en_i(reg_wr_en),
-    .reg_wr_data_i(reg_wr_data),
-
     .reg_rd_addr_i(reg_rd_addr),
-    .reg_rd_data_o(reg_rd_data)
+
+    .reg_wr_en_i(reg_wr_en_a | reg_wr_en_b),
+    .reg_wr_addr_i({reg_wr_en_b, reg_wr_addr}),
+    .reg_wr_data_i(reg_wr_en_b ? reg_wr_data : spi_byte_data),
+
+    .reg_rd_data_o(reg_rd_data),
+
+    .reg_gate_time_o(gate_time)
 );
 
 control control(
@@ -69,8 +74,8 @@ control control(
     .spi_byte_vld_i(spi_byte_vld),
     .spi_byte_data_i(spi_byte_data),
 
-    .gate_st_o(gate_st),
-    .gate_time_o(gate_time),
+    .reg_wr_en_o(reg_wr_en_a),
+    .reg_wr_addr_o(reg_wr_addr),
 
     .reg_rd_addr_o(reg_rd_addr)
 );
@@ -81,10 +86,9 @@ measure measure(
 
     .sig_clk_i(sig_clk_i),
 
-    .gate_st_i(gate_st),
     .gate_time_i(gate_time),
 
-    .reg_wr_en_o(reg_wr_en),
+    .reg_wr_en_o(reg_wr_en_b),
     .reg_wr_data_o(reg_wr_data)
 );
 
@@ -98,8 +102,7 @@ initial begin
     spi_sclk_i <= 1'b0;
     spi_mosi_i <= 1'b0;
 
-    sig_clk_i  <= 1'b1;
-    sig_sync_i <= 1'b0;
+    sig_clk_i <= 1'b1;
 
     #2 rst_n_i <= 1'b1;
 end
@@ -115,10 +118,64 @@ end
 always begin
     #50 spi_cs_n_i <= 1'b0;
 
-    #100 sig_sync_i <= 1'b1;
-    #900 sig_sync_i <= 1'b0;
+    // CONF_WR
+    #20 dc_i <= 1'b0;
 
-    #750
+    // 0x2A
+    #15 spi_sclk_i <= 1'b0;
+        spi_mosi_i <= 1'b0;  // BIT7
+    #15 spi_sclk_i <= 1'b1;
+
+    #15 spi_sclk_i <= 1'b0;
+        spi_mosi_i <= 1'b0;  // BIT6
+    #15 spi_sclk_i <= 1'b1;
+
+    #15 spi_sclk_i <= 1'b0;
+        spi_mosi_i <= 1'b1;  // BIT5
+    #15 spi_sclk_i <= 1'b1;
+
+    #15 spi_sclk_i <= 1'b0;
+        spi_mosi_i <= 1'b0;  // BIT4
+    #15 spi_sclk_i <= 1'b1;
+
+    #15 spi_sclk_i <= 1'b0;
+        spi_mosi_i <= 1'b1;  // BIT3
+    #15 spi_sclk_i <= 1'b1;
+
+    #15 spi_sclk_i <= 1'b0;
+        spi_mosi_i <= 1'b0;  // BIT2
+    #15 spi_sclk_i <= 1'b1;
+
+    #15 spi_sclk_i <= 1'b0;
+        spi_mosi_i <= 1'b1;  // BIT1
+    #15 spi_sclk_i <= 1'b1;
+
+    #15 spi_sclk_i <= 1'b0;
+        spi_mosi_i <= 1'b0;  // BIT0
+    #15 spi_sclk_i <= 1'b1;
+
+    #20 dc_i <= 1'b1;
+
+    for (integer i = 0; i < 4; i++) begin
+        #15 spi_sclk_i <= 1'b0;
+            spi_mosi_i <= 1'b0;
+        #15 spi_sclk_i <= 1'b1;
+    end
+
+    for (integer i = 0; i < 2; i++) begin
+        #15 spi_sclk_i <= 1'b0;
+            spi_mosi_i <= 1'b1;
+        #15 spi_sclk_i <= 1'b1;
+        #15 spi_sclk_i <= 1'b0;
+            spi_mosi_i <= 1'b0;
+        #15 spi_sclk_i <= 1'b1;
+    end
+
+    for (integer i = 0; i < 24; i++) begin
+        #15 spi_sclk_i <= 1'b0;
+            spi_mosi_i <= 1'b0;
+        #15 spi_sclk_i <= 1'b1;
+    end
 
     // REG_RD
     #20 dc_i <= 1'b0;
