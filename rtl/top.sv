@@ -16,8 +16,10 @@ module digital_frequency_meter(
     input logic spi_cs_n_i,
 
     input logic sig_clk_i,
+    input logic gate_st_i,
 
     output logic gate_sync_o,
+
     output logic spi_miso_o
 );
 
