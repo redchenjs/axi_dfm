@@ -56,7 +56,7 @@ begin
         if (reg_wr_en_i) begin
             if (reg_wr_addr_i[2]) begin
                 {regs[7], regs[6], regs[5], regs[4]} <= reg_wr_data_i[31:0];
-                {regs[11], regs[10], regs[9], regs[8]} <= reg_wr_data_i[64:32];
+                {regs[11], regs[10], regs[9], regs[8]} <= reg_wr_data_i[63:32];
                 {regs[15], regs[14], regs[13], regs[12]} <= reg_wr_data_i[95:64];
             end else begin
                 regs[reg_wr_addr_i[1:0]] <= reg_wr_data_i[7:0];

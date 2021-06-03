@@ -19,9 +19,9 @@ module measure(
 );
 
 logic sig_sync;
-logic sig_sync_n;
+logic gate_sync_n;
 
-logic sig_rst_n;
+logic gate_done;
 
 logic sig_clk_p;
 logic sig_clk_n;
@@ -42,7 +42,7 @@ edge2en sig_sync_en(
     .clk_i(clk_i),
     .rst_n_i(rst_n_i),
     .data_i(sig_sync),
-    .neg_edge_o(sig_sync_n)
+    .neg_edge_o(gate_sync_n)
 );
 
 edge2en sig_clk_en(
@@ -75,7 +75,7 @@ end
 always_ff @(posedge clk_i or negedge rst_n_i)
 begin
     if (!rst_n_i) begin
-        sig_rst_n <= 1'b0;
+        gate_done <= 1'b0;
 
         sig_cnt <= 32'h0000_0000;
         clk_cnt <= 32'h0000_0000;
@@ -83,9 +83,9 @@ begin
         reg_wr_en   <= 1'b0;
         reg_wr_data <= 96'h0000_0000_0000_0000_0000_0000;
     end else begin
-        sig_rst_n <= ~sig_sync_n;
+        gate_done <= ~gate_sync_n;
 
-        if (!sig_rst_n) begin
+        if (!gate_done) begin
             sig_cnt <= 32'h0000_0000;
             clk_cnt <= 32'h0000_0000;
         end else if (sig_sync) begin
@@ -93,8 +93,8 @@ begin
             clk_cnt <= clk_cnt + 1'b1;
         end
 
-        reg_wr_en   <= sig_sync_n;
-        reg_wr_data <= sig_sync_n ? {clk_cnt, sig_cnt} : reg_wr_data;
+        reg_wr_en   <= gate_sync_n;
+        reg_wr_data <= gate_sync_n ? {clk_cnt, sig_cnt} : reg_wr_data;
     end
 end
 
