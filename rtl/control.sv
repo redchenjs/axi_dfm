@@ -17,6 +17,7 @@ module control(
     output logic       reg_wr_en_o,
     output logic [1:0] reg_wr_addr_o,
 
+    output logic       reg_rd_en_o,
     output logic [4:0] reg_rd_addr_o
 );
 
@@ -43,6 +44,7 @@ wire data_done = (rd_addr == 5'h12);
 assign reg_wr_en_o   = conf_wr & spi_byte_vld_i;
 assign reg_wr_addr_o = wr_addr;
 
+assign reg_rd_en_o   = data_rd;
 assign reg_rd_addr_o = rd_addr;
 
 always_ff @(posedge clk_i or negedge rst_n_i)

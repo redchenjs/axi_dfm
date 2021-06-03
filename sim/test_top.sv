@@ -26,13 +26,14 @@ logic [7:0] spi_byte_data;
 
 logic [31:0] gate_time;
 
+logic       reg_rd_en;
+logic [4:0] reg_rd_addr;
+logic [7:0] reg_rd_data;
+
 logic        reg_wr_en_a;
 logic        reg_wr_en_b;
 logic  [1:0] reg_wr_addr;
 logic [95:0] reg_wr_data;
-
-logic [4:0] reg_rd_addr;
-logic [7:0] reg_rd_data;
 
 spi_slave spi_slave(
     .clk_i(clk_i),
@@ -56,7 +57,7 @@ regfile regfile(
 
     .reg_rd_addr_i(reg_rd_addr),
 
-    .reg_wr_en_i(reg_wr_en_a | reg_wr_en_b),
+    .reg_wr_en_i((reg_wr_en_a | reg_wr_en_b) & ~reg_rd_en),
     .reg_wr_addr_i({reg_wr_en_b, reg_wr_addr}),
     .reg_wr_data_i(reg_wr_en_b ? reg_wr_data : spi_byte_data),
 
@@ -77,6 +78,7 @@ control control(
     .reg_wr_en_o(reg_wr_en_a),
     .reg_wr_addr_o(reg_wr_addr),
 
+    .reg_rd_en_o(reg_rd_en),
     .reg_rd_addr_o(reg_rd_addr)
 );
 
