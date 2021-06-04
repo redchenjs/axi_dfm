@@ -18,13 +18,13 @@ module measure(
     output logic [95:0] reg_wr_data_o
 );
 
-logic sig_sync;
-logic gate_sync_n;
+logic sig_clk_p;
+logic sig_clk_n;
 
 logic gate_done;
 
-logic sig_clk_p;
-logic sig_clk_n;
+logic gate_sync;
+logic gate_sync_n;
 
 logic        gate_en;
 logic [31:0] gate_cnt;
@@ -38,13 +38,6 @@ logic [95:0] reg_wr_data;
 assign reg_wr_en_o   = reg_wr_en;
 assign reg_wr_data_o = reg_wr_data;
 
-edge2en sig_sync_en(
-    .clk_i(clk_i),
-    .rst_n_i(rst_n_i),
-    .data_i(sig_sync),
-    .neg_edge_o(gate_sync_n)
-);
-
 edge2en sig_clk_en(
     .clk_i(clk_i),
     .rst_n_i(rst_n_i),
@@ -53,28 +46,20 @@ edge2en sig_clk_en(
     .neg_edge_o(sig_clk_n)
 );
 
+edge2en gate_sync_en(
+    .clk_i(clk_i),
+    .rst_n_i(rst_n_i),
+    .data_i(gate_sync),
+    .neg_edge_o(gate_sync_n)
+);
+
 always_ff @(posedge clk_i or negedge rst_n_i)
 begin
     if (!rst_n_i) begin
         gate_en  <= 1'b0;
         gate_cnt <= 32'h0000_0000;
 
-        sig_sync <= 1'b0;
-    end else begin
-        gate_en  <= sig_sync ? ((gate_cnt == gate_time_i) ? 1'b0 : gate_en) : 1'b1;
-        gate_cnt <= gate_en & sig_sync & (gate_cnt != gate_time_i) ? gate_cnt + 1'b1 : 32'h0000_0000;
-
-        if (sig_sync) begin
-            sig_sync <= sig_clk_p & ~gate_en ? 1'b0 : sig_sync;
-        end else begin
-            sig_sync <= sig_clk_p & gate_en ? 1'b1 : sig_sync;
-        end
-    end
-end
-
-always_ff @(posedge clk_i or negedge rst_n_i)
-begin
-    if (!rst_n_i) begin
+        gate_sync <= 1'b0;
         gate_done <= 1'b0;
 
         sig_cnt <= 32'h0000_0000;
@@ -83,12 +68,21 @@ begin
         reg_wr_en   <= 1'b0;
         reg_wr_data <= 96'h0000_0000_0000_0000_0000_0000;
     end else begin
-        gate_done <= ~gate_sync_n;
+        gate_en  <= gate_sync ? ((gate_cnt == gate_time_i) ? 1'b0 : gate_en) : 1'b1;
+        gate_cnt <= gate_en & gate_sync & (gate_cnt != gate_time_i) ? gate_cnt + 1'b1 : 32'h0000_0000;
 
-        if (!gate_done) begin
+        gate_done <= gate_sync_n;
+
+        if (gate_sync) begin
+            gate_sync <= sig_clk_p & ~gate_en ? 1'b0 : gate_sync;
+        end else begin
+            gate_sync <= sig_clk_p & gate_en ? 1'b1 : gate_sync;
+        end
+
+        if (gate_done) begin
             sig_cnt <= 32'h0000_0000;
             clk_cnt <= 32'h0000_0000;
-        end else if (sig_sync) begin
+        end else if (gate_sync) begin
             sig_cnt <= sig_clk_p ? sig_cnt + 1'b1 : sig_cnt;
             clk_cnt <= clk_cnt + 1'b1;
         end

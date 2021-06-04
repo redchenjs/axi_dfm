@@ -17,7 +17,14 @@ module digital_frequency_meter(
 
     input logic sig_clk_i,
 
-    output logic spi_miso_o
+    output logic spi_miso_o,
+
+    output logic dbg_rst_n_o,
+    output logic dbg_dc_o,
+    output logic dbg_spi_sclk_o,
+    output logic dbg_spi_mosi_o,
+    output logic dbg_spi_cs_n_o,
+    output logic dbg_spi_miso_o
 );
 
 logic sys_clk;
@@ -36,6 +43,13 @@ logic        reg_wr_en_a;
 logic        reg_wr_en_b;
 logic  [1:0] reg_wr_addr;
 logic [95:0] reg_wr_data;
+
+assign dbg_rst_n_o = rst_n_i;
+assign dbg_dc_o = dc_i;
+assign dbg_spi_sclk_o = spi_sclk_i;
+assign dbg_spi_mosi_o = spi_mosi_i;
+assign dbg_spi_cs_n_o = spi_cs_n_i;
+assign dbg_spi_miso_o = spi_miso_o;
 
 sys_ctl sys_ctl(
     .clk_i(clk_i),

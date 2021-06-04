@@ -131,7 +131,7 @@ always begin
         spi_mosi_i <= 1'b1;  // BIT0
     #15 spi_sclk_i <= 1'b1;
 
-    for (integer i = 0; i < 24; i++) begin
+    for (integer i = 0; i < 1024; i++) begin
         #15 spi_sclk_i <= 1'b0;
             spi_mosi_i <= 1'b0;
         #15 spi_sclk_i <= 1'b1;
