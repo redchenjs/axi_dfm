@@ -17,7 +17,7 @@ logic sig_clk_i;
 logic [31:0] gate_time_i;
 
 logic        reg_wr_en_o;
-logic [95:0] reg_wr_data_o;
+logic [63:0] reg_wr_data_o;
 
 measure measure(
     .clk_i(clk_i),

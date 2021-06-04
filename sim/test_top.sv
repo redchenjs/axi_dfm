@@ -27,13 +27,13 @@ logic [7:0] spi_byte_data;
 logic [31:0] gate_time;
 
 logic       reg_rd_en;
-logic [4:0] reg_rd_addr;
+logic [3:0] reg_rd_addr;
 logic [7:0] reg_rd_data;
 
 logic        reg_wr_en_a;
 logic        reg_wr_en_b;
 logic  [1:0] reg_wr_addr;
-logic [95:0] reg_wr_data;
+logic [63:0] reg_wr_data;
 
 spi_slave spi_slave(
     .clk_i(clk_i),

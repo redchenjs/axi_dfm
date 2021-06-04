@@ -11,19 +11,19 @@ module regfile(
     input logic clk_i,
     input logic rst_n_i,
 
-    input logic [4:0] reg_rd_addr_i,
+    input logic [3:0] reg_rd_addr_i,
 
     input logic        reg_wr_en_i,
     input logic  [2:0] reg_wr_addr_i,
-    input logic [95:0] reg_wr_data_i,
+    input logic [63:0] reg_wr_data_i,
 
     output logic [7:0] reg_rd_data_o,
 
     output logic [31:0] reg_gate_time_o
 );
 
-logic [7:0] regs[15:0];
-logic [7:0] data[19:0];
+logic [7:0] regs[11:0];
+logic [7:0] data[15:0];
 
 genvar i;
 generate
@@ -49,7 +49,7 @@ begin
         regs[2] <= DEFAULT_GATE_TIME[23:16];
         regs[3] <= DEFAULT_GATE_TIME[31:24];
 
-        for (integer i = 4; i < 16; i++) begin
+        for (integer i = 4; i < 12; i++) begin
             regs[i] <= 8'h00;
         end
     end else begin
@@ -57,7 +57,6 @@ begin
             if (reg_wr_addr_i[2]) begin
                 {regs[7], regs[6], regs[5], regs[4]} <= reg_wr_data_i[31:0];
                 {regs[11], regs[10], regs[9], regs[8]} <= reg_wr_data_i[63:32];
-                {regs[15], regs[14], regs[13], regs[12]} <= reg_wr_data_i[95:64];
             end else begin
                 regs[reg_wr_addr_i[1:0]] <= reg_wr_data_i[7:0];
             end
