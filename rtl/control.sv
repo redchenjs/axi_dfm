@@ -14,96 +14,38 @@ module control(
     input logic       spi_byte_vld_i,
     input logic [7:0] spi_byte_data_i,
 
-    output logic       reg_wr_en_o,
-    output logic [1:0] reg_wr_addr_o,
-
     output logic       reg_rd_en_o,
-    output logic [3:0] reg_rd_addr_o
+    output logic [2:0] reg_rd_addr_o
 );
 
 typedef enum logic [7:0] {
-    CONF_WR = 8'h2a,
-    INFO_RD = 8'h3a,
     DATA_RD = 8'h3b
 } cmd_t;
 
-logic gate_en;
-logic conf_wr;
+logic       rd_en;
+logic [2:0] rd_addr;
 
-logic info_rd;
-logic data_rd;
-
-logic [1:0] wr_addr;
-logic [3:0] rd_addr;
-
-wire conf_done = (wr_addr == 2'h3);
-
-wire info_done = (rd_addr == 4'h6);
-wire data_done = (rd_addr == 4'he);
-
-assign reg_wr_en_o   = conf_wr & spi_byte_vld_i;
-assign reg_wr_addr_o = wr_addr;
-
-assign reg_rd_en_o   = data_rd;
+assign reg_rd_en_o   = rd_en;
 assign reg_rd_addr_o = rd_addr;
 
 always_ff @(posedge clk_i or negedge rst_n_i)
 begin
     if (!rst_n_i) begin
-        conf_wr <= 1'b0;
-
-        info_rd <= 1'b0;
-        data_rd <= 1'b0;
-
-        wr_addr <= 2'h0;
-        rd_addr <= 4'h0;
+        rd_en   <= 1'b0;
+        rd_addr <= 3'h0;
     end else begin
         if (spi_byte_vld_i) begin
             if (!dc_i) begin  // Command
-                wr_addr <= 2'h0;
+                if (spi_byte_data_i == DATA_RD) begin
+                    rd_en <= 1'b1;
+                end else begin
+                    rd_en <= 1'b0;
+                end
 
-                case (spi_byte_data_i)
-                    CONF_WR: begin
-                        conf_wr <= 1'b1;
-
-                        info_rd <= 1'b0;
-                        data_rd <= 1'b0;
-
-                        rd_addr <= 4'h0;
-                    end
-                    INFO_RD: begin
-                        conf_wr <= 1'b0;
-
-                        info_rd <= 1'b1;
-                        data_rd <= 1'b0;
-
-                        rd_addr <= 4'h0;
-                    end
-                    DATA_RD: begin
-                        conf_wr <= 1'b0;
-
-                        info_rd <= 1'b0;
-                        data_rd <= 1'b1;
-
-                        rd_addr <= 4'h8;
-                    end
-                    default: begin
-                        conf_wr <= 1'b0;
-
-                        info_rd <= 1'b0;
-                        data_rd <= 1'b0;
-
-                        rd_addr <= 4'h0;
-                    end
-                endcase
+                rd_addr <= 3'h0;
             end else begin    // Data
-                conf_wr <= conf_done ? 1'b0 : conf_wr;
-
-                info_rd <= info_done ? 1'b0 : info_rd;
-                data_rd <= data_done ? 1'b0 : data_rd;
-
-                wr_addr <= conf_wr ? wr_addr + 1'b1 : 2'h0;
-                rd_addr <= (info_rd | data_rd) ? rd_addr + 1'b1 : 4'h0;
+                rd_en   <= (rd_addr == 3'h6) ? 1'b0 : rd_en;
+                rd_addr <= rd_en ? rd_addr + 1'b1 : 3'h0;
             end
         end
     end

@@ -5,14 +5,13 @@
  *      Author: Jack Chen <redchenjs@live.com>
  */
 
+`include "config.sv"
+
 module measure(
     input logic clk_i,
     input logic rst_n_i,
 
     input logic sig_clk_i,
-
-    input logic        gate_en_i,
-    input logic [31:0] gate_time_i,
 
     output logic        reg_wr_en_o,
     output logic [63:0] reg_wr_data_o
@@ -65,8 +64,8 @@ begin
         reg_wr_en   <= 1'b0;
         reg_wr_data <= 64'h0000_0000_0000_0000;
     end else begin
-        gate_en  <= gate_sync ? ((gate_cnt == gate_time_i) ? 1'b0 : gate_en) : 1'b1;
-        gate_cnt <= gate_en & gate_sync & (gate_cnt != gate_time_i) ? gate_cnt + 1'b1 : 32'h0000_0000;
+        gate_en  <= gate_sync ? ((gate_cnt == DEFAULT_GATE_TIME) ? 1'b0 : gate_en) : 1'b1;
+        gate_cnt <= gate_en & gate_sync & (gate_cnt != DEFAULT_GATE_TIME) ? gate_cnt + 1'b1 : 32'h0000_0000;
 
         if (gate_sync) begin
             gate_sync <= sig_clk_p & ~gate_en ? 1'b0 : gate_sync;

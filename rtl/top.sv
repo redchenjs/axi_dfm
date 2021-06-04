@@ -17,14 +17,7 @@ module digital_frequency_meter(
 
     input logic sig_clk_i,
 
-    output logic spi_miso_o,
-
-    output logic dbg_rst_n_o,
-    output logic dbg_dc_o,
-    output logic dbg_spi_sclk_o,
-    output logic dbg_spi_mosi_o,
-    output logic dbg_spi_cs_n_o,
-    output logic dbg_spi_miso_o
+    output logic spi_miso_o
 );
 
 logic sys_clk;
@@ -33,23 +26,12 @@ logic sys_rst_n;
 logic       spi_byte_vld;
 logic [7:0] spi_byte_data;
 
-logic [31:0] gate_time;
-
 logic       reg_rd_en;
-logic [3:0] reg_rd_addr;
+logic [2:0] reg_rd_addr;
 logic [7:0] reg_rd_data;
 
-logic        reg_wr_en_a;
-logic        reg_wr_en_b;
-logic  [1:0] reg_wr_addr;
+logic        reg_wr_en;
 logic [63:0] reg_wr_data;
-
-assign dbg_rst_n_o = rst_n_i;
-assign dbg_dc_o = dc_i;
-assign dbg_spi_sclk_o = spi_sclk_i;
-assign dbg_spi_mosi_o = spi_mosi_i;
-assign dbg_spi_cs_n_o = spi_cs_n_i;
-assign dbg_spi_miso_o = spi_miso_o;
 
 sys_ctl sys_ctl(
     .clk_i(clk_i),
@@ -81,13 +63,10 @@ regfile regfile(
 
     .reg_rd_addr_i(reg_rd_addr),
 
-    .reg_wr_en_i((reg_wr_en_a | reg_wr_en_b) & ~reg_rd_en),
-    .reg_wr_addr_i({reg_wr_en_b, reg_wr_addr}),
-    .reg_wr_data_i(reg_wr_en_b ? reg_wr_data : spi_byte_data),
+    .reg_wr_en_i(reg_wr_en & ~reg_rd_en),
+    .reg_wr_data_i(reg_wr_data),
 
-    .reg_rd_data_o(reg_rd_data),
-
-    .reg_gate_time_o(gate_time)
+    .reg_rd_data_o(reg_rd_data)
 );
 
 control control(
@@ -99,9 +78,6 @@ control control(
     .spi_byte_vld_i(spi_byte_vld),
     .spi_byte_data_i(spi_byte_data),
 
-    .reg_wr_en_o(reg_wr_en_a),
-    .reg_wr_addr_o(reg_wr_addr),
-
     .reg_rd_en_o(reg_rd_en),
     .reg_rd_addr_o(reg_rd_addr)
 );
@@ -112,9 +88,7 @@ measure measure(
 
     .sig_clk_i(sig_clk_i),
 
-    .gate_time_i(gate_time),
-
-    .reg_wr_en_o(reg_wr_en_b),
+    .reg_wr_en_o(reg_wr_en),
     .reg_wr_data_o(reg_wr_data)
 );
 
