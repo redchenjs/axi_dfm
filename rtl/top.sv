@@ -23,6 +23,9 @@ module digital_frequency_meter(
 logic sys_clk;
 logic sys_rst_n;
 
+logic [5:0] aux_clk;
+logic [5:0] aux_rst_n;
+
 logic       spi_byte_vld;
 logic [7:0] spi_byte_data;
 
@@ -38,7 +41,10 @@ sys_ctl sys_ctl(
     .rst_n_i(rst_n_i),
 
     .sys_clk_o(sys_clk),
-    .sys_rst_n_o(sys_rst_n)
+    .sys_rst_n_o(sys_rst_n),
+
+    .aux_clk_o(aux_clk),
+    .aux_rst_n_o(aux_rst_n)
 );
 
 spi_slave spi_slave(
@@ -87,6 +93,9 @@ measure measure(
     .rst_n_i(sys_rst_n),
 
     .sig_clk_i(sig_clk_i),
+
+    .ref_clk_i(aux_clk),
+    .ref_rst_n_i(aux_rst_n),
 
     .reg_wr_en_o(reg_wr_en),
     .reg_wr_data_o(reg_wr_data)
