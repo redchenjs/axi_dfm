@@ -1,0 +1,99 @@
+From 5400f31759634f5e73f1a29f670792bebf0828fa Mon Sep 17 00:00:00 2001
+From: Jack Chen <redchenjs@live.com>
+Date: Sun, 6 Jun 2021 17:01:46 +0800
+Subject: xc7a35tfgg484-2
+
+Signed-off-by: Jack Chen <redchenjs@live.com>
+---
+ digital_frequency_meter.xdc |  20 +++++++++++---------
+ rtl/config.sv               |   2 +-
+ rtl/top.sv                  |  11 ++++++++++-
+ 3 files changed, 22 insertions(+), 11 deletions(-)
+
+diff --git a/digital_frequency_meter.xdc b/digital_frequency_meter.xdc
+index 15b51e4..413dc7b 100644
+--- a/digital_frequency_meter.xdc
++++ b/digital_frequency_meter.xdc
+@@ -1,7 +1,8 @@
+ set_property BITSTREAM.CONFIG.CONFIGRATE 50 [current_design]
+ set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]
+ 
+-set_property IOSTANDARD LVCMOS33 [get_ports clk_i]
++set_property IOSTANDARD LVDS_25 [get_ports clk_p_i]
++set_property IOSTANDARD LVDS_25 [get_ports clk_n_i]
+ set_property IOSTANDARD LVCMOS33 [get_ports rst_n_i]
+ set_property IOSTANDARD LVCMOS33 [get_ports dc_i]
+ set_property IOSTANDARD LVCMOS33 [get_ports spi_sclk_i]
+@@ -10,14 +11,15 @@ set_property IOSTANDARD LVCMOS33 [get_ports spi_cs_n_i]
+ set_property IOSTANDARD LVCMOS33 [get_ports sig_clk_i]
+ set_property IOSTANDARD LVCMOS33 [get_ports spi_miso_o]
+ 
+-set_property PACKAGE_PIN L17 [get_ports clk_i]
+-set_property PACKAGE_PIN R3 [get_ports rst_n_i]
+-set_property PACKAGE_PIN T3 [get_ports dc_i]
+-set_property PACKAGE_PIN R2 [get_ports spi_sclk_i]
+-set_property PACKAGE_PIN T1 [get_ports spi_mosi_i]
+-set_property PACKAGE_PIN T2 [get_ports spi_cs_n_i]
+-set_property PACKAGE_PIN W2 [get_ports sig_clk_i]
+-set_property PACKAGE_PIN U1 [get_ports spi_miso_o]
++set_property PACKAGE_PIN D17 [get_ports clk_p_i]
++set_property PACKAGE_PIN C17 [get_ports clk_n_i]
++set_property PACKAGE_PIN G15 [get_ports rst_n_i]
++set_property PACKAGE_PIN G18 [get_ports dc_i]
++set_property PACKAGE_PIN G20 [get_ports spi_sclk_i]
++set_property PACKAGE_PIN H22 [get_ports spi_mosi_i]
++set_property PACKAGE_PIN J21 [get_ports spi_cs_n_i]
++set_property PACKAGE_PIN P1 [get_ports sig_clk_i]
++set_property PACKAGE_PIN J22 [get_ports spi_miso_o]
+ 
+ set_false_path -from [get_ports rst_n_i]
+ set_false_path -from [get_ports dc_i]
+diff --git a/rtl/config.sv b/rtl/config.sv
+index c987dbb..de20c09 100644
+--- a/rtl/config.sv
++++ b/rtl/config.sv
+@@ -5,4 +5,4 @@
+  *      Author: Jack Chen <redchenjs@live.com>
+  */
+ 
+-parameter [32:0] DEFAULT_GATE_TIME = 32'd37_499;
++parameter [32:0] DEFAULT_GATE_TIME = 32'd49_999;
+diff --git a/rtl/top.sv b/rtl/top.sv
+index cf1b79f..f74da74 100644
+--- a/rtl/top.sv
++++ b/rtl/top.sv
+@@ -6,7 +6,8 @@
+  */
+ 
+ module digital_frequency_meter(
+-    input logic clk_i,          // clk_i = 12 MHz
++    input logic clk_p_i,
++    input logic clk_n_i,
+     input logic rst_n_i,        // rst_n_i, active low
+ 
+     input logic dc_i,
+@@ -20,6 +21,8 @@ module digital_frequency_meter(
+     output logic spi_miso_o
+ );
+ 
++logic clk_i;
++
+ logic sys_clk;
+ logic sys_rst_n;
+ 
+@@ -36,6 +39,12 @@ logic [7:0] reg_rd_data;
+ logic        reg_wr_en;
+ logic [63:0] reg_wr_data;
+ 
++IBUFGDS clk_buf(
++    .O(clk_i),
++    .I(clk_p_i),
++    .IB(clk_n_i)
++);
++
+ sys_ctl sys_ctl(
+     .clk_i(clk_i),
+     .rst_n_i(rst_n_i),
+-- 
+2.31.1
+
