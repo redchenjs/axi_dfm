@@ -23,8 +23,8 @@ module digital_frequency_meter(
 logic sys_clk;
 logic sys_rst_n;
 
-logic [5:0] aux_clk;
-logic [5:0] aux_rst_n;
+logic [3:0] aux_clk;
+logic [3:0] aux_rst_n;
 
 logic       spi_byte_vld;
 logic [7:0] spi_byte_data;

@@ -5,4 +5,4 @@
  *      Author: Jack Chen <redchenjs@live.com>
  */
 
-parameter [32:0] DEFAULT_GATE_TIME = 32'd24_999;
+parameter [32:0] DEFAULT_GATE_TIME = 32'd37_499;

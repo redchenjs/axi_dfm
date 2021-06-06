@@ -14,8 +14,8 @@ logic rst_n_i;
 
 logic sig_clk_i;
 
-logic [5:0] ref_clk_i;
-logic [5:0] ref_rst_n_i;
+logic [3:0] ref_clk_i;
+logic [3:0] ref_rst_n_i;
 
 logic        reg_wr_en_o;
 logic [63:0] reg_wr_data_o;
@@ -39,11 +39,11 @@ initial begin
 
     sig_clk_i <= 1'b1;
 
-    ref_clk_i   <= 6'h00;
-    ref_rst_n_i <= 6'h00;
+    ref_clk_i   <= 4'h0;
+    ref_rst_n_i <= 4'h0;
 
-    #2 rst_n_i <= 1'b1;
-    #2 ref_rst_n_i <= 6'h3f;
+    #2 rst_n_i     <= 1'b1;
+       ref_rst_n_i <= 4'hf;
 end
 
 always begin
@@ -61,42 +61,29 @@ always begin
 end
 
 always begin
-    #0.8
+    #1.2
     while (1) begin
         #2.4 ref_clk_i[1] <= ~ref_clk_i[1];
     end
 end
 
 always begin
-    #1.6
+    #2.4
     while (1) begin
         #2.4 ref_clk_i[2] <= ~ref_clk_i[2];
     end
 end
 
 always begin
-    #2.4
+    #3.6
     while (1) begin
         #2.4 ref_clk_i[3] <= ~ref_clk_i[3];
     end
 end
 
 always begin
-    #3.2
-    while (1) begin
-        #2.4 ref_clk_i[4] <= ~ref_clk_i[4];
-    end
-end
-
-always begin
-    #4.0
-    while (1) begin
-        #2.4 ref_clk_i[5] <= ~ref_clk_i[5];
-    end
-end
-
-always begin
-    #1000000 rst_n_i <= 1'b0;
+    #1000000 rst_n_i     <= 1'b0;
+             ref_rst_n_i <= 4'h0;
 
     #25 $stop;
 end
