@@ -26,9 +26,11 @@ logic        gate_en;
 logic [31:0] gate_cnt;
 
 logic [3:0] gate_sync;
+logic [3:0] gate_sync_p;
 logic [3:0] gate_sync_n;
 
 logic       gate_sync_rst;
+logic [3:0] gate_sync_init;
 logic [3:0] gate_sync_done;
 logic       gate_sync_done_p;
 
@@ -68,6 +70,7 @@ generate
             .clk_i(clk_i),
             .rst_n_i(rst_n_i),
             .data_i(gate_sync[i]),
+            .pos_edge_o(gate_sync_p[i]),
             .neg_edge_o(gate_sync_n[i])
         );
 
@@ -101,7 +104,8 @@ begin
         gate_en  <= 1'b0;
         gate_cnt <= 32'h0000_0000;
 
-        gate_sync_rst  <= 1'b1;
+        gate_sync_rst  <= 1'b0;
+        gate_sync_init <= 4'h0;
         gate_sync_done <= 4'h0;
 
         for (integer i = 0; i < 4; i++) begin
@@ -115,12 +119,13 @@ begin
         reg_wr_en   <= 4'h0;
         reg_wr_data <= 64'h0000_0000_0000_0000;
     end else begin
-        gate_en  <= gate_sync_rst ? 1'b1 : ((gate_cnt == DEFAULT_GATE_TIME) ? 1'b0 : gate_en);
-        gate_cnt <= gate_sync_rst | ~gate_en | (gate_cnt == DEFAULT_GATE_TIME) ? 32'h0000_0000 : gate_cnt + 1'b1;
+        gate_en  <= (gate_sync_init == 4'hf) ? ((gate_cnt == DEFAULT_GATE_TIME) ? 1'b0 : gate_en) : 1'b1;
+        gate_cnt <= (gate_sync_init == 4'hf) & gate_en & (gate_cnt != DEFAULT_GATE_TIME) ? gate_cnt + 1'b1 : 32'h0000_0000;
 
         gate_sync_rst <= reg_wr_en[3];
 
         for (integer i = 0; i < 4; i++) begin
+            gate_sync_init[i] <= gate_sync_rst ? 1'b0 : (gate_sync_p[i] ? 1'b1 : gate_sync_init[i]);
             gate_sync_done[i] <= gate_sync_rst ? 1'b0 : (gate_sync_n[i] ? 1'b1 : gate_sync_done[i]);
         end
 
