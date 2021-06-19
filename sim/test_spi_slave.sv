@@ -23,8 +23,6 @@ logic spi_miso_o;
 logic       spi_byte_vld_o;
 logic [7:0] spi_byte_data_o;
 
-assign spi_byte_rdy_i = spi_byte_vld_o;
-
 spi_slave spi_slave(
     .clk_i(clk_i),
     .rst_n_i(rst_n_i),

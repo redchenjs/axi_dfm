@@ -1,9 +1,6 @@
 set_property BITSTREAM.CONFIG.CONFIGRATE 50 [current_design]
 set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]
 
-set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets sig_clk_i]
-create_clock -period 400.000 [get_nets sig_clk_i]
-
 set_property IOSTANDARD LVCMOS33 [get_ports clk_i]
 set_property IOSTANDARD LVCMOS33 [get_ports rst_n_i]
 set_property IOSTANDARD LVCMOS33 [get_ports dc_i]

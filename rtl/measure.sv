@@ -20,24 +20,29 @@ module measure(
     output logic [63:0] reg_wr_data_o
 );
 
-logic sig_rst_n;
+logic sig_clk_s[4];
+logic sig_clk_p[4];
 
-logic gate_real;
-logic gate_real_n;
+logic gate_st;
+logic gate_st_s[4];
 
-logic sig_gate;
-logic sig_gate_n;
+logic gate_sync[4];
+logic gate_sync_s[4];
+logic gate_sync_p[4];
+logic gate_sync_n[4];
 
-logic [3:0] ref_gate;
-logic [3:0] ref_gate_n;
+logic       gate_sync_rst;
+logic [3:0] gate_sync_init;
+logic [3:0] gate_sync_done;
+logic       gate_sync_done_p;
 
-logic        gate_en;
-logic [31:0] gate_cnt;
+logic        gate_en[4];
+logic [31:0] gate_cnt[4];
 
-logic [31:0] sig_clk_cnt;
-logic [31:0] sig_clk_out;
-
+logic [31:0] sig_clk_cnt[4];
 logic [31:0] ref_clk_cnt[4];
+
+logic [31:0] sig_clk_out[4];
 logic [31:0] ref_clk_out[4];
 
 logic [31:0] sig_clk_sum;
@@ -49,76 +54,77 @@ logic [63:0] reg_wr_data;
 assign reg_wr_en_o   = reg_wr_en[3];
 assign reg_wr_data_o = reg_wr_data;
 
-rst_syn sig_rst_syn(
-    .clk_i(sig_clk_i),
-    .rst_n_i(rst_n_i),
-    .rst_n_o(sig_rst_n)
-);
-
-data_syn sig_gate_syn(
-    .clk_i(sig_clk_i),
-    .rst_n_i(sig_rst_n),
-    .data_i(gate_en),
-    .data_o(sig_gate)
-);
-
-edge2en sig_gate_en(
-    .clk_i(sig_clk_i),
-    .rst_n_i(sig_rst_n),
-    .data_i(sig_gate),
-    .neg_edge_o(sig_gate_n)
-);
-
-data_syn gate_real_syn(
+edge2en gate_sync_done_en(
     .clk_i(clk_i),
     .rst_n_i(rst_n_i),
-    .data_i(sig_gate),
-    .data_o(gate_real)
+    .data_i(gate_sync_done == 4'hf),
+    .pos_edge_o(gate_sync_done_p)
 );
-
-edge2en gate_real_en(
-    .clk_i(clk_i),
-    .rst_n_i(rst_n_i),
-    .data_i(gate_real),
-    .neg_edge_o(gate_real_n)
-);
-
-always_ff @(posedge sig_clk_i or negedge sig_rst_n)
-begin
-    if (!sig_rst_n) begin
-        sig_clk_cnt <= 32'h0000_0000;
-        sig_clk_out <= 32'h0000_0000;
-    end else begin
-        sig_clk_cnt <= sig_gate_n ? 32'h0000_0000 : (sig_gate ? sig_clk_cnt + 1'b1 : sig_clk_cnt);
-        sig_clk_out <= sig_gate_n ? sig_clk_cnt : sig_clk_out;
-    end
-end
 
 genvar i;
 generate
     for (i = 0; i < 4; i++) begin: measure_block
-        data_syn ref_gate_syn(
+        data_syn sig_clk_syn(
             .clk_i(ref_clk_i[i]),
             .rst_n_i(ref_rst_n_i[i]),
-            .data_i(sig_gate),
-            .data_o(ref_gate[i])
+            .data_i(sig_clk_i),
+            .data_o(sig_clk_s[i])
         );
 
-        edge2en ref_gate_en(
+        edge2en sig_clk_en(
             .clk_i(ref_clk_i[i]),
             .rst_n_i(ref_rst_n_i[i]),
-            .data_i(ref_gate[i]),
-            .neg_edge_o(ref_gate_n[i])
+            .data_i(sig_clk_s[i]),
+            .pos_edge_o(sig_clk_p[i])
+        );
+
+        data_syn gate_st_syn(
+            .clk_i(ref_clk_i[i]),
+            .rst_n_i(ref_rst_n_i[i]),
+            .data_i(gate_st),
+            .data_o(gate_st_s[i])
+        );
+
+        data_syn gate_sync_syn(
+            .clk_i(clk_i),
+            .rst_n_i(rst_n_i),
+            .data_i(gate_sync[i]),
+            .data_o(gate_sync_s[i])
+        );
+
+        edge2en gate_sync_en(
+            .clk_i(clk_i),
+            .rst_n_i(rst_n_i),
+            .data_i(gate_sync_s[i]),
+            .pos_edge_o(gate_sync_p[i]),
+            .neg_edge_o(gate_sync_n[i])
         );
 
         always_ff @(posedge ref_clk_i[i] or negedge ref_rst_n_i[i])
         begin
             if (!ref_rst_n_i[i]) begin
+                gate_en[i]  <= 1'b0;
+                gate_cnt[i] <= 32'h0000_0000;
+
+                gate_sync[i] <= 1'b0;
+
+                sig_clk_cnt[i] <= 32'h0000_0000;
                 ref_clk_cnt[i] <= 32'h0000_0000;
-                ref_clk_out[i] <= 32'h0000_0000;
             end else begin
-                ref_clk_cnt[i] <= ref_gate_n[i] ? 32'h0000_0000 : (ref_gate[i] ? ref_clk_cnt[i] + 1'b1 : ref_clk_cnt[i]);
-                ref_clk_out[i] <= ref_gate_n[i] ? ref_clk_cnt[i] : ref_clk_out[i];
+                gate_en[i]  <= gate_sync[i] ? ((gate_cnt[i] == DEFAULT_GATE_TIME) ? 1'b0 : gate_en[i]) : gate_st_s[i];
+                gate_cnt[i] <= gate_sync[i] & gate_en[i] & (gate_cnt[i] != DEFAULT_GATE_TIME) ? gate_cnt[i] + 1'b1 : 32'h0000_0000;
+
+                if (gate_sync[i]) begin
+                    gate_sync[i] <= sig_clk_p[i] & ~gate_en[i] ? 1'b0 : gate_sync[i];
+
+                    sig_clk_cnt[i] <= sig_clk_p[i] ? sig_clk_cnt[i] + 1'b1 : sig_clk_cnt[i];
+                    ref_clk_cnt[i] <= ref_clk_cnt[i] + 1'b1;
+                end else begin
+                    gate_sync[i] <= sig_clk_p[i] & gate_en[i] ? 1'b1 : gate_sync[i];
+
+                    sig_clk_cnt[i] <= sig_clk_p[i] ? 32'h0000_0000 : sig_clk_cnt[i];
+                    ref_clk_cnt[i] <= sig_clk_p[i] ? 32'h0000_0000 : ref_clk_cnt[i];
+                end
             end
         end
     end
@@ -127,8 +133,16 @@ endgenerate
 always_ff @(posedge clk_i or negedge rst_n_i)
 begin
     if (!rst_n_i) begin
-        gate_en  <= 1'b0;
-        gate_cnt <= 32'h0000_0000;
+        gate_st <= 1'b0;
+
+        gate_sync_rst  <= 1'b0;
+        gate_sync_init <= 4'h0;
+        gate_sync_done <= 4'h0;
+
+        for (integer i = 0; i < 4; i++) begin
+            sig_clk_out[i] <= 32'h0000_0000;
+            ref_clk_out[i] <= 32'h0000_0000;
+        end
 
         sig_clk_sum <= 32'h0000_0000;
         ref_clk_sum <= 32'h0000_0000;
@@ -136,15 +150,29 @@ begin
         reg_wr_en   <= 4'h0;
         reg_wr_data <= 64'h0000_0000_0000_0000;
     end else begin
-        gate_en  <= gate_real ? ((gate_cnt == DEFAULT_GATE_TIME) ? 1'b0 : gate_en) : 1'b1;
-        gate_cnt <= gate_real & gate_en & (gate_cnt != DEFAULT_GATE_TIME) ? gate_cnt + 1'b1 : 32'h0000_0000;
+        gate_st <= (gate_sync_init != 4'hf);
 
-        sig_clk_sum <= reg_wr_en[0] ? sig_clk_cnt : sig_clk_sum;
+        gate_sync_rst <= reg_wr_en[3];
+
+        for (integer i = 0; i < 4; i++) begin
+            gate_sync_init[i] <= gate_sync_rst ? 1'b0 : (gate_sync_p[i] ? 1'b1 : gate_sync_init[i]);
+            gate_sync_done[i] <= gate_sync_rst ? 1'b0 : (gate_sync_n[i] ? 1'b1 : gate_sync_done[i]);
+        end
+
+        for (integer i = 0; i < 4; i++) begin
+            sig_clk_out[i] <= (gate_sync_done == 4'hf) ? sig_clk_cnt[i] : sig_clk_out[i];
+            ref_clk_out[i] <= (gate_sync_done == 4'hf) ? ref_clk_cnt[i] : ref_clk_out[i];
+        end
+
+        sig_clk_sum <= reg_wr_en[0] ? sig_clk_out[0] + sig_clk_out[1] :
+                       reg_wr_en[1] ? sig_clk_out[2] + sig_clk_out[3] + sig_clk_sum :
+                       sig_clk_sum;
+
         ref_clk_sum <= reg_wr_en[0] ? ref_clk_out[0] + ref_clk_out[1] :
                        reg_wr_en[1] ? ref_clk_out[2] + ref_clk_out[3] + ref_clk_sum :
                        ref_clk_sum;
 
-        reg_wr_en   <= {reg_wr_en[2:0], gate_real_n};
+        reg_wr_en   <= {reg_wr_en[2:0], gate_sync_done_p};
         reg_wr_data <= reg_wr_en[2] ? {ref_clk_sum, sig_clk_sum} : reg_wr_data;
     end
 end
