@@ -56,8 +56,8 @@ index c987dbb..de20c09 100644
   *      Author: Jack Chen <redchenjs@live.com>
   */
  
--parameter [32:0] DEFAULT_GATE_TIME = 32'd37_499;
-+parameter [32:0] DEFAULT_GATE_TIME = 32'd49_999;
+-parameter [31:0] DEFAULT_GATE_TIME = 32'd37_499;
++parameter [31:0] DEFAULT_GATE_TIME = 32'd47_999;
 diff --git a/rtl/top.sv b/rtl/top.sv
 index cf1b79f..f74da74 100644
 --- a/rtl/top.sv
