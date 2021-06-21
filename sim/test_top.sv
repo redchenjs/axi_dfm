@@ -21,8 +21,11 @@ logic spi_miso_o;
 
 logic sig_clk_i;
 
-logic [3:0] aux_clk_i;
-logic [3:0] aux_rst_n_i;
+wire sys_clk   = clk_i;
+wire sys_rst_n = rst_n_i;
+
+logic [4:0] gate_en;
+logic [4:0] gate_sync;
 
 logic       spi_byte_vld;
 logic [7:0] spi_byte_data;
@@ -31,12 +34,15 @@ logic       reg_rd_en;
 logic [2:0] reg_rd_addr;
 logic [7:0] reg_rd_data;
 
+logic  [4:0] raw_wr_en;
+logic [63:0] raw_wr_data[5];
+
 logic        reg_wr_en;
 logic [63:0] reg_wr_data;
 
 spi_slave spi_slave(
-    .clk_i(clk_i),
-    .rst_n_i(rst_n_i),
+    .clk_i(sys_clk),
+    .rst_n_i(sys_rst_n),
 
     .spi_byte_data_i(reg_rd_data),
 
@@ -51,8 +57,8 @@ spi_slave spi_slave(
 );
 
 regfile regfile(
-    .clk_i(clk_i),
-    .rst_n_i(rst_n_i),
+    .clk_i(sys_clk),
+    .rst_n_i(sys_rst_n),
 
     .reg_rd_addr_i(reg_rd_addr),
 
@@ -63,8 +69,8 @@ regfile regfile(
 );
 
 control control(
-    .clk_i(clk_i),
-    .rst_n_i(rst_n_i),
+    .clk_i(sys_clk),
+    .rst_n_i(sys_rst_n),
 
     .dc_i(dc_i),
 
@@ -75,18 +81,58 @@ control control(
     .reg_rd_addr_o(reg_rd_addr)
 );
 
-measure measure(
-    .clk_i(clk_i),
-    .rst_n_i(rst_n_i),
+timer timer(
+    .clk_i(sys_clk),
+    .rst_n_i(sys_rst_n),
 
-    .sig_clk_i(sig_clk_i),
+    .gate_sync_i(gate_sync),
 
-    .ref_clk_i(aux_clk_i),
-    .ref_rst_n_i(aux_rst_n_i),
-
-    .reg_wr_en_o(reg_wr_en),
-    .reg_wr_data_o(reg_wr_data)
+    .gate_en_o(gate_en)
 );
+
+genvar i;
+generate
+    for (i = 0; i < 5; i++) begin: measure_block
+        measure measure(
+            .clk_i(sys_clk),
+            .rst_n_i(sys_rst_n),
+
+            .sig_clk_i(sig_clk_i),
+
+            .gate_en_i(gate_en[i]),
+
+            .reg_wr_en_o(raw_wr_en[i]),
+            .reg_wr_data_o(raw_wr_data[i]),
+
+            .gate_sync_o(gate_sync[i])
+        );
+    end
+endgenerate
+
+always_ff @(posedge sys_clk or negedge sys_rst_n)
+begin
+    if (!sys_rst_n) begin
+        reg_wr_en   <= 1'b0;
+        reg_wr_data <= 64'h0000_0000_0000_0000;
+    end else begin
+        reg_wr_en <= raw_wr_en[0] | raw_wr_en[1] | raw_wr_en[2] | raw_wr_en[3] | raw_wr_en[4];
+
+        case (raw_wr_en)
+            5'b00001:
+                reg_wr_data <= raw_wr_data[0];
+            5'b00010:
+                reg_wr_data <= raw_wr_data[1];
+            5'b00100:
+                reg_wr_data <= raw_wr_data[2];
+            5'b01000:
+                reg_wr_data <= raw_wr_data[3];
+            5'b10000:
+                reg_wr_data <= raw_wr_data[4];
+            default:
+                reg_wr_data <= reg_wr_data;
+        endcase
+    end
+end
 
 initial begin
     clk_i   <= 1'b1;
@@ -100,11 +146,7 @@ initial begin
 
     sig_clk_i <= 1'b1;
 
-    aux_clk_i   <= 4'h0;
-    aux_rst_n_i <= 4'h0;
-
-    #2 rst_n_i     <= 1'b1;
-       aux_rst_n_i <= 4'hf;
+    #2 rst_n_i <= 1'b1;
 end
 
 always begin
@@ -113,33 +155,6 @@ end
 
 always begin
     #250 sig_clk_i <= ~sig_clk_i;
-end
-
-always begin
-    while (1) begin
-        #2.4 aux_clk_i[0] <= ~aux_clk_i[0];
-    end
-end
-
-always begin
-    #1.2
-    while (1) begin
-        #2.4 aux_clk_i[1] <= ~aux_clk_i[1];
-    end
-end
-
-always begin
-    #2.4
-    while (1) begin
-        #2.4 aux_clk_i[2] <= ~aux_clk_i[2];
-    end
-end
-
-always begin
-    #3.6
-    while (1) begin
-        #2.4 aux_clk_i[3] <= ~aux_clk_i[3];
-    end
 end
 
 always begin
@@ -189,7 +204,7 @@ always begin
         #15 spi_sclk_i <= 1'b1;
     end
 
-    #1000000 rst_n_i <= 1'b0;
+    #10000000 rst_n_i <= 1'b0;
     #25 $stop;
 end
 

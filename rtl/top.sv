@@ -23,8 +23,8 @@ module digital_frequency_meter(
 logic sys_clk;
 logic sys_rst_n;
 
-logic [3:0] aux_clk;
-logic [3:0] aux_rst_n;
+logic [4:0] gate_en;
+logic [4:0] gate_sync;
 
 logic       spi_byte_vld;
 logic [7:0] spi_byte_data;
@@ -32,6 +32,9 @@ logic [7:0] spi_byte_data;
 logic       reg_rd_en;
 logic [2:0] reg_rd_addr;
 logic [7:0] reg_rd_data;
+
+logic  [4:0] raw_wr_en;
+logic [63:0] raw_wr_data[5];
 
 logic        reg_wr_en;
 logic [63:0] reg_wr_data;
@@ -41,10 +44,7 @@ sys_ctl sys_ctl(
     .rst_n_i(rst_n_i),
 
     .sys_clk_o(sys_clk),
-    .sys_rst_n_o(sys_rst_n),
-
-    .aux_clk_o(aux_clk),
-    .aux_rst_n_o(aux_rst_n)
+    .sys_rst_n_o(sys_rst_n)
 );
 
 spi_slave spi_slave(
@@ -88,17 +88,55 @@ control control(
     .reg_rd_addr_o(reg_rd_addr)
 );
 
-measure measure(
+startup startup(
     .clk_i(sys_clk),
     .rst_n_i(sys_rst_n),
 
-    .sig_clk_i(sig_clk_i),
-
-    .ref_clk_i(aux_clk),
-    .ref_rst_n_i(aux_rst_n),
-
-    .reg_wr_en_o(reg_wr_en),
-    .reg_wr_data_o(reg_wr_data)
+    .gate_en_o(gate_en)
 );
+
+genvar i;
+generate
+    for (i = 0; i < 5; i++) begin: measure_block
+        measure measure(
+            .clk_i(sys_clk),
+            .rst_n_i(sys_rst_n),
+
+            .sig_clk_i(sig_clk_i),
+
+            .gate_en_i(gate_en[i]),
+
+            .reg_wr_en_o(raw_wr_en[i]),
+            .reg_wr_data_o(raw_wr_data[i]),
+
+            .gate_sync_o(gate_sync[i])
+        );
+    end
+endgenerate
+
+always_ff @(posedge sys_clk or negedge sys_rst_n)
+begin
+    if (!sys_rst_n) begin
+        reg_wr_en   <= 1'b0;
+        reg_wr_data <= 64'h0000_0000_0000_0000;
+    end else begin
+        reg_wr_en <= raw_wr_en[0] | raw_wr_en[1] | raw_wr_en[2] | raw_wr_en[3] | raw_wr_en[4];
+
+        case (raw_wr_en)
+            5'b00001:
+                reg_wr_data <= raw_wr_data[0];
+            5'b00010:
+                reg_wr_data <= raw_wr_data[1];
+            5'b00100:
+                reg_wr_data <= raw_wr_data[2];
+            5'b01000:
+                reg_wr_data <= raw_wr_data[3];
+            5'b10000:
+                reg_wr_data <= raw_wr_data[4];
+            default:
+                reg_wr_data <= reg_wr_data;
+        endcase
+    end
+end
 
 endmodule

@@ -10,21 +10,14 @@ module sys_ctl(
     input logic rst_n_i,
 
     output logic sys_clk_o,
-    output logic sys_rst_n_o,
-
-    output logic [3:0] aux_clk_o,
-    output logic [3:0] aux_rst_n_o
+    output logic sys_rst_n_o
  );
 
  pll pll(
     .clk_in1(clk_i),
     .reset(~rst_n_i),
     .locked(pll_locked),
-    .clk_out1(sys_clk_o),
-    .clk_out2(aux_clk_o[0]),
-    .clk_out3(aux_clk_o[1]),
-    .clk_out4(aux_clk_o[2]),
-    .clk_out5(aux_clk_o[3])
+    .clk_out1(sys_clk_o)
 );
 
 rst_syn sys_rst_n_syn(
@@ -32,16 +25,5 @@ rst_syn sys_rst_n_syn(
     .rst_n_i(rst_n_i & pll_locked),
     .rst_n_o(sys_rst_n_o)
 );
-
-genvar i;
-generate
-    for (i = 0; i < 4; i++) begin: aux_rst_n
-        rst_syn aux_rst_n_syn(
-            .clk_i(aux_clk_o[i]),
-            .rst_n_i(rst_n_i & pll_locked),
-            .rst_n_o(aux_rst_n_o[i])
-        );
-    end
-endgenerate
 
 endmodule
