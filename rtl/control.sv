@@ -25,7 +25,7 @@ typedef enum logic [7:0] {
 logic       rd_en;
 logic [2:0] rd_addr;
 
-assign reg_rd_en_o   = rd_en;
+assign reg_rd_en_o   = rd_en & spi_byte_vld_i;
 assign reg_rd_addr_o = rd_addr;
 
 always_ff @(posedge clk_i or negedge rst_n_i)
@@ -44,8 +44,8 @@ begin
 
                 rd_addr <= 3'h0;
             end else begin    // Data
-                rd_en   <= (rd_addr == 3'h6) ? 1'b0 : rd_en;
-                rd_addr <= rd_en ? rd_addr + 1'b1 : 3'h0;
+                rd_en   <= 1'b0;
+                rd_addr <= rd_addr + 1'b1;
             end
         end
     end

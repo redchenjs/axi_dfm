@@ -55,7 +55,7 @@ always begin
 end
 
 always begin
-    #10000 rst_n_i <= 1'b0;
+    #10000000 rst_n_i <= 1'b0;
 
     #25 $stop;
 end
