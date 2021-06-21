@@ -1,14 +1,14 @@
-From 5400f31759634f5e73f1a29f670792bebf0828fa Mon Sep 17 00:00:00 2001
+From e53df912f41b06afa4809f27ed9570d2b944113e Mon Sep 17 00:00:00 2001
 From: Jack Chen <redchenjs@live.com>
-Date: Sun, 6 Jun 2021 17:01:46 +0800
-Subject: xc7a35tfgg484-2
+Date: Mon, 21 Jun 2021 14:35:35 +0800
+Subject: [PATCH] xc7a35tfgg484-2
 
 Signed-off-by: Jack Chen <redchenjs@live.com>
 ---
  digital_frequency_meter.xdc |  20 +++++++++++---------
- rtl/config.sv               |   2 +-
+ rtl/config.sv               |   4 ++--
  rtl/top.sv                  |  11 ++++++++++-
- 3 files changed, 22 insertions(+), 11 deletions(-)
+ 3 files changed, 23 insertions(+), 12 deletions(-)
 
 diff --git a/digital_frequency_meter.xdc b/digital_frequency_meter.xdc
 index 15b51e4..413dc7b 100644
@@ -49,17 +49,21 @@ index 15b51e4..413dc7b 100644
  set_false_path -from [get_ports rst_n_i]
  set_false_path -from [get_ports dc_i]
 diff --git a/rtl/config.sv b/rtl/config.sv
-index c987dbb..de20c09 100644
+index 74a0241..dcb511f 100644
 --- a/rtl/config.sv
 +++ b/rtl/config.sv
-@@ -5,4 +5,4 @@
-  *      Author: Jack Chen <redchenjs@live.com>
-  */
+@@ -8,7 +8,7 @@
+ `ifndef _CONFIG_SV_
+ `define _CONFIG_SV_
  
--parameter [31:0] DEFAULT_GATE_TIME = 32'd37_499;
-+parameter [31:0] DEFAULT_GATE_TIME = 32'd47_999;
+-localparam DEFAULT_GATE_TIME_SHIFT = 32'd49_999;
+-localparam DEFAULT_GATE_TIME_TOTAL = 32'd249_999;
++localparam DEFAULT_GATE_TIME_SHIFT = 32'd59_999;
++localparam DEFAULT_GATE_TIME_TOTAL = 32'd299_999;
+ 
+ `endif
 diff --git a/rtl/top.sv b/rtl/top.sv
-index cf1b79f..f74da74 100644
+index 60842a5..e467e0f 100644
 --- a/rtl/top.sv
 +++ b/rtl/top.sv
 @@ -6,7 +6,8 @@
@@ -81,7 +85,7 @@ index cf1b79f..f74da74 100644
  logic sys_clk;
  logic sys_rst_n;
  
-@@ -36,6 +39,12 @@ logic [7:0] reg_rd_data;
+@@ -39,6 +42,12 @@ logic [63:0] raw_wr_data[5];
  logic        reg_wr_en;
  logic [63:0] reg_wr_data;
  
@@ -95,5 +99,4 @@ index cf1b79f..f74da74 100644
      .clk_i(clk_i),
      .rst_n_i(rst_n_i),
 -- 
-2.31.1
-
+2.32.0
