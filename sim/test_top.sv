@@ -168,6 +168,7 @@ always begin
 end
 
 always begin
+    #5000000
     #50 spi_cs_n_i <= 1'b0;
 
     // DATA_RD
@@ -214,7 +215,7 @@ always begin
         #15 spi_sclk_i <= 1'b1;
     end
 
-    #10000000 rst_n_i <= 1'b0;
+    #10 rst_n_i <= 1'b0;
     #25 $stop;
 end
 
