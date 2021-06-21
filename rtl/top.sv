@@ -30,10 +30,10 @@ logic       spi_byte_vld;
 logic [7:0] spi_byte_data;
 
 logic       raw_rd_en;
-logic [2:0] raw_rd_addr;
+logic [3:0] raw_rd_addr;
 
 logic       reg_rd_en;
-logic [2:0] reg_rd_addr;
+logic [3:0] reg_rd_addr;
 logic [7:0] reg_rd_data;
 
 logic  [4:0] raw_wr_en;
@@ -124,7 +124,7 @@ always_ff @(posedge sys_clk or negedge sys_rst_n)
 begin
     if (!sys_rst_n) begin
         reg_rd_en   <= 1'b0;
-        reg_rd_addr <= 3'h0;
+        reg_rd_addr <= 4'h0;
 
         reg_wr_en   <= 1'b0;
         reg_wr_data <= 64'h0000_0000_0000_0000;
