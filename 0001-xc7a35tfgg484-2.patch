@@ -1,17 +1,17 @@
-From 52616310ca12e95059f91e92896b2849eacde25b Mon Sep 17 00:00:00 2001
+From 8ec52d08b5b0fd4de7fc28a838edf0f8c59fd10b Mon Sep 17 00:00:00 2001
 From: Jack Chen <redchenjs@live.com>
-Date: Mon, 21 Jun 2021 21:39:07 +0800
+Date: Mon, 21 Jun 2021 22:50:55 +0800
 Subject: [PATCH] xc7a35tfgg484-2
 
 Signed-off-by: Jack Chen <redchenjs@live.com>
 ---
- digital_frequency_meter.xdc | 38 ++++++++++++++++++++++++++++---------
+ digital_frequency_meter.xdc | 20 +++++++++++---------
  rtl/config.sv               |  4 ++--
- rtl/top.sv                  | 27 ++++++++++++++++++++++++--
- 3 files changed, 56 insertions(+), 13 deletions(-)
+ rtl/top.sv                  | 11 ++++++++++-
+ 3 files changed, 23 insertions(+), 12 deletions(-)
 
 diff --git a/digital_frequency_meter.xdc b/digital_frequency_meter.xdc
-index 15b51e4..9fe3ccc 100644
+index 15b51e4..413dc7b 100644
 --- a/digital_frequency_meter.xdc
 +++ b/digital_frequency_meter.xdc
 @@ -1,7 +1,8 @@
@@ -24,16 +24,9 @@ index 15b51e4..9fe3ccc 100644
  set_property IOSTANDARD LVCMOS33 [get_ports rst_n_i]
  set_property IOSTANDARD LVCMOS33 [get_ports dc_i]
  set_property IOSTANDARD LVCMOS33 [get_ports spi_sclk_i]
-@@ -9,15 +10,28 @@ set_property IOSTANDARD LVCMOS33 [get_ports spi_mosi_i]
- set_property IOSTANDARD LVCMOS33 [get_ports spi_cs_n_i]
+@@ -10,14 +11,15 @@ set_property IOSTANDARD LVCMOS33 [get_ports spi_cs_n_i]
  set_property IOSTANDARD LVCMOS33 [get_ports sig_clk_i]
  set_property IOSTANDARD LVCMOS33 [get_ports spi_miso_o]
-+set_property IOSTANDARD LVCMOS33 [get_ports dbg_rst_n]
-+set_property IOSTANDARD LVCMOS33 [get_ports dbg_dc]
-+set_property IOSTANDARD LVCMOS33 [get_ports dbg_spi_sclk]
-+set_property IOSTANDARD LVCMOS33 [get_ports dbg_spi_mosi]
-+set_property IOSTANDARD LVCMOS33 [get_ports dbg_spi_cs_n]
-+set_property IOSTANDARD LVCMOS33 [get_ports dbg_spi_miso]
  
 -set_property PACKAGE_PIN L17 [get_ports clk_i]
 -set_property PACKAGE_PIN R3 [get_ports rst_n_i]
@@ -52,25 +45,9 @@ index 15b51e4..9fe3ccc 100644
 +set_property PACKAGE_PIN J21 [get_ports spi_cs_n_i]
 +set_property PACKAGE_PIN P1 [get_ports sig_clk_i]
 +set_property PACKAGE_PIN J22 [get_ports spi_miso_o]
-+set_property PACKAGE_PIN M1 [get_ports dbg_rst_n]
-+set_property PACKAGE_PIN L1 [get_ports dbg_dc]
-+set_property PACKAGE_PIN K2 [get_ports dbg_spi_sclk]
-+set_property PACKAGE_PIN J2 [get_ports dbg_spi_mosi]
-+set_property PACKAGE_PIN G2 [get_ports dbg_spi_cs_n]
-+set_property PACKAGE_PIN E2 [get_ports dbg_spi_miso]
  
  set_false_path -from [get_ports rst_n_i]
  set_false_path -from [get_ports dc_i]
-@@ -26,3 +40,9 @@ set_false_path -from [get_ports spi_mosi_i]
- set_false_path -from [get_ports spi_cs_n_i]
- set_false_path -from [get_ports sig_clk_i]
- set_false_path -to [get_ports spi_miso_o]
-+set_false_path -to [get_ports dbg_rst_n]
-+set_false_path -to [get_ports dbg_dc]
-+set_false_path -to [get_ports dbg_spi_sclk]
-+set_false_path -to [get_ports dbg_spi_mosi]
-+set_false_path -to [get_ports dbg_spi_cs_n]
-+set_false_path -to [get_ports dbg_spi_miso]
 diff --git a/rtl/config.sv b/rtl/config.sv
 index cf0b913..fc65fab 100644
 --- a/rtl/config.sv
@@ -86,7 +63,7 @@ index cf0b913..fc65fab 100644
  
  `endif
 diff --git a/rtl/top.sv b/rtl/top.sv
-index 950a356..c79d735 100644
+index 113a677..a28bbb0 100644
 --- a/rtl/top.sv
 +++ b/rtl/top.sv
 @@ -6,7 +6,8 @@
@@ -99,19 +76,8 @@ index 950a356..c79d735 100644
      input logic rst_n_i,        // rst_n_i, active low
  
      input logic dc_i,
-@@ -17,9 +18,18 @@ module digital_frequency_meter(
- 
-     input logic sig_clk_i,
- 
--    output logic spi_miso_o
-+    output logic spi_miso_o,
-+
-+    output logic dbg_rst_n,
-+    output logic dbg_dc,
-+    output logic dbg_spi_sclk,
-+    output logic dbg_spi_mosi,
-+    output logic dbg_spi_cs_n,
-+    output logic dbg_spi_miso
+@@ -20,6 +21,8 @@ module digital_frequency_meter(
+     output logic spi_miso_o
  );
  
 +logic clk_i;
@@ -119,17 +85,10 @@ index 950a356..c79d735 100644
  logic sys_clk;
  logic sys_rst_n;
  
-@@ -42,6 +52,19 @@ logic [63:0] raw_wr_data[5];
+@@ -42,6 +45,12 @@ logic [63:0] raw_wr_data[5];
  logic        reg_wr_en;
  logic [63:0] reg_wr_data;
  
-+assign dbg_rst_n = rst_n_i;
-+assign dbg_dc = dc_i;
-+assign dbg_spi_sclk = spi_sclk_i;
-+assign dbg_spi_mosi = spi_mosi_i;
-+assign dbg_spi_cs_n = spi_cs_n_i;
-+assign dbg_spi_miso = spi_miso_o;
-+
 +IBUFGDS clk_buf(
 +    .O(clk_i),
 +    .I(clk_p_i),
