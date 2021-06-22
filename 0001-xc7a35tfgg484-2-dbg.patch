@@ -1,0 +1,144 @@
+From 52616310ca12e95059f91e92896b2849eacde25b Mon Sep 17 00:00:00 2001
+From: Jack Chen <redchenjs@live.com>
+Date: Mon, 21 Jun 2021 21:39:07 +0800
+Subject: [PATCH] xc7a35tfgg484-2
+
+Signed-off-by: Jack Chen <redchenjs@live.com>
+---
+ digital_frequency_meter.xdc | 38 ++++++++++++++++++++++++++++---------
+ rtl/config.sv               |  4 ++--
+ rtl/top.sv                  | 27 ++++++++++++++++++++++++--
+ 3 files changed, 56 insertions(+), 13 deletions(-)
+
+diff --git a/digital_frequency_meter.xdc b/digital_frequency_meter.xdc
+index 15b51e4..9fe3ccc 100644
+--- a/digital_frequency_meter.xdc
++++ b/digital_frequency_meter.xdc
+@@ -1,7 +1,8 @@
+ set_property BITSTREAM.CONFIG.CONFIGRATE 50 [current_design]
+ set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]
+ 
+-set_property IOSTANDARD LVCMOS33 [get_ports clk_i]
++set_property IOSTANDARD LVDS_25 [get_ports clk_p_i]
++set_property IOSTANDARD LVDS_25 [get_ports clk_n_i]
+ set_property IOSTANDARD LVCMOS33 [get_ports rst_n_i]
+ set_property IOSTANDARD LVCMOS33 [get_ports dc_i]
+ set_property IOSTANDARD LVCMOS33 [get_ports spi_sclk_i]
+@@ -9,15 +10,28 @@ set_property IOSTANDARD LVCMOS33 [get_ports spi_mosi_i]
+ set_property IOSTANDARD LVCMOS33 [get_ports spi_cs_n_i]
+ set_property IOSTANDARD LVCMOS33 [get_ports sig_clk_i]
+ set_property IOSTANDARD LVCMOS33 [get_ports spi_miso_o]
++set_property IOSTANDARD LVCMOS33 [get_ports dbg_rst_n]
++set_property IOSTANDARD LVCMOS33 [get_ports dbg_dc]
++set_property IOSTANDARD LVCMOS33 [get_ports dbg_spi_sclk]
++set_property IOSTANDARD LVCMOS33 [get_ports dbg_spi_mosi]
++set_property IOSTANDARD LVCMOS33 [get_ports dbg_spi_cs_n]
++set_property IOSTANDARD LVCMOS33 [get_ports dbg_spi_miso]
+ 
+-set_property PACKAGE_PIN L17 [get_ports clk_i]
+-set_property PACKAGE_PIN R3 [get_ports rst_n_i]
+-set_property PACKAGE_PIN T3 [get_ports dc_i]
+-set_property PACKAGE_PIN R2 [get_ports spi_sclk_i]
+-set_property PACKAGE_PIN T1 [get_ports spi_mosi_i]
+-set_property PACKAGE_PIN T2 [get_ports spi_cs_n_i]
+-set_property PACKAGE_PIN W2 [get_ports sig_clk_i]
+-set_property PACKAGE_PIN U1 [get_ports spi_miso_o]
++set_property PACKAGE_PIN D17 [get_ports clk_p_i]
++set_property PACKAGE_PIN C17 [get_ports clk_n_i]
++set_property PACKAGE_PIN G15 [get_ports rst_n_i]
++set_property PACKAGE_PIN G18 [get_ports dc_i]
++set_property PACKAGE_PIN G20 [get_ports spi_sclk_i]
++set_property PACKAGE_PIN H22 [get_ports spi_mosi_i]
++set_property PACKAGE_PIN J21 [get_ports spi_cs_n_i]
++set_property PACKAGE_PIN P1 [get_ports sig_clk_i]
++set_property PACKAGE_PIN J22 [get_ports spi_miso_o]
++set_property PACKAGE_PIN M1 [get_ports dbg_rst_n]
++set_property PACKAGE_PIN L1 [get_ports dbg_dc]
++set_property PACKAGE_PIN K2 [get_ports dbg_spi_sclk]
++set_property PACKAGE_PIN J2 [get_ports dbg_spi_mosi]
++set_property PACKAGE_PIN G2 [get_ports dbg_spi_cs_n]
++set_property PACKAGE_PIN E2 [get_ports dbg_spi_miso]
+ 
+ set_false_path -from [get_ports rst_n_i]
+ set_false_path -from [get_ports dc_i]
+@@ -26,3 +40,9 @@ set_false_path -from [get_ports spi_mosi_i]
+ set_false_path -from [get_ports spi_cs_n_i]
+ set_false_path -from [get_ports sig_clk_i]
+ set_false_path -to [get_ports spi_miso_o]
++set_false_path -to [get_ports dbg_rst_n]
++set_false_path -to [get_ports dbg_dc]
++set_false_path -to [get_ports dbg_spi_sclk]
++set_false_path -to [get_ports dbg_spi_mosi]
++set_false_path -to [get_ports dbg_spi_cs_n]
++set_false_path -to [get_ports dbg_spi_miso]
+diff --git a/rtl/config.sv b/rtl/config.sv
+index cf0b913..fc65fab 100644
+--- a/rtl/config.sv
++++ b/rtl/config.sv
+@@ -8,7 +8,7 @@
+ `ifndef _CONFIG_SV_
+ `define _CONFIG_SV_
+ 
+-localparam [31:0] DEFAULT_GATE_TIME_SHIFT = 32'd49_999;
+-localparam [31:0] DEFAULT_GATE_TIME_TOTAL = 32'd249_999;
++localparam [31:0] DEFAULT_GATE_TIME_SHIFT = 32'd59_999;
++localparam [31:0] DEFAULT_GATE_TIME_TOTAL = 32'd299_999;
+ 
+ `endif
+diff --git a/rtl/top.sv b/rtl/top.sv
+index 950a356..c79d735 100644
+--- a/rtl/top.sv
++++ b/rtl/top.sv
+@@ -6,7 +6,8 @@
+  */
+ 
+ module digital_frequency_meter(
+-    input logic clk_i,          // clk_i = 12 MHz
++    input logic clk_p_i,
++    input logic clk_n_i,
+     input logic rst_n_i,        // rst_n_i, active low
+ 
+     input logic dc_i,
+@@ -17,9 +18,18 @@ module digital_frequency_meter(
+ 
+     input logic sig_clk_i,
+ 
+-    output logic spi_miso_o
++    output logic spi_miso_o,
++
++    output logic dbg_rst_n,
++    output logic dbg_dc,
++    output logic dbg_spi_sclk,
++    output logic dbg_spi_mosi,
++    output logic dbg_spi_cs_n,
++    output logic dbg_spi_miso
+ );
+ 
++logic clk_i;
++
+ logic sys_clk;
+ logic sys_rst_n;
+ 
+@@ -42,6 +52,19 @@ logic [63:0] raw_wr_data[5];
+ logic        reg_wr_en;
+ logic [63:0] reg_wr_data;
+ 
++assign dbg_rst_n = rst_n_i;
++assign dbg_dc = dc_i;
++assign dbg_spi_sclk = spi_sclk_i;
++assign dbg_spi_mosi = spi_mosi_i;
++assign dbg_spi_cs_n = spi_cs_n_i;
++assign dbg_spi_miso = spi_miso_o;
++
++IBUFGDS clk_buf(
++    .O(clk_i),
++    .I(clk_p_i),
++    .IB(clk_n_i)
++);
++
+ sys_ctl sys_ctl(
+     .clk_i(clk_i),
+     .rst_n_i(rst_n_i),
+-- 
+2.32.0
+
