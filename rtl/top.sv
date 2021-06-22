@@ -29,9 +29,6 @@ logic [4:0] gate_sync;
 logic       spi_byte_vld;
 logic [7:0] spi_byte_data;
 
-logic       raw_rd_en;
-logic [3:0] raw_rd_addr;
-
 logic       reg_rd_en;
 logic [3:0] reg_rd_addr;
 logic [7:0] reg_rd_data;
@@ -88,8 +85,8 @@ control control(
     .spi_byte_vld_i(spi_byte_vld),
     .spi_byte_data_i(spi_byte_data),
 
-    .reg_rd_en_o(raw_rd_en),
-    .reg_rd_addr_o(raw_rd_addr)
+    .reg_rd_en_o(reg_rd_en),
+    .reg_rd_addr_o(reg_rd_addr)
 );
 
 startup startup(
@@ -123,15 +120,9 @@ endgenerate
 always_ff @(posedge sys_clk or negedge sys_rst_n)
 begin
     if (!sys_rst_n) begin
-        reg_rd_en   <= 1'b0;
-        reg_rd_addr <= 4'h0;
-
         reg_wr_en   <= 1'b0;
         reg_wr_data <= 64'h0000_0000_0000_0000;
     end else begin
-        reg_rd_en   <= raw_rd_en;
-        reg_rd_addr <= raw_rd_addr;
-
         reg_wr_en <= raw_wr_en[0] | raw_wr_en[1] | raw_wr_en[2] | raw_wr_en[3] | raw_wr_en[4];
 
         case (raw_wr_en)

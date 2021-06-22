@@ -19,11 +19,11 @@ module control(
 );
 
 typedef enum logic [7:0] {
-    INFO_RD = 8'h3a,
+    CONF_RD = 8'h3a,
     DATA_RD = 8'h3b
 } cmd_t;
 
-logic info_rd;
+logic conf_rd;
 logic data_rd;
 
 logic [3:0] rd_addr;
@@ -34,7 +34,7 @@ assign reg_rd_addr_o = rd_addr;
 always_ff @(posedge clk_i or negedge rst_n_i)
 begin
     if (!rst_n_i) begin
-        info_rd <= 1'b0;
+        conf_rd <= 1'b0;
         data_rd <= 1'b0;
 
         rd_addr <= 4'h0;
@@ -42,30 +42,30 @@ begin
         if (spi_byte_vld_i) begin
             if (!dc_i) begin  // Command
                 case (spi_byte_data_i)
-                    INFO_RD: begin
-                        info_rd <= 1'b1;
+                    CONF_RD: begin
+                        conf_rd <= 1'b1;
                         data_rd <= 1'b0;
 
                         rd_addr <= 4'h0;
                     end
                     DATA_RD: begin
-                        info_rd <= 1'b0;
+                        conf_rd <= 1'b0;
                         data_rd <= 1'b1;
 
                         rd_addr <= 4'h8;
                     end
                     default: begin
-                        info_rd <= 1'b0;
+                        conf_rd <= 1'b0;
                         data_rd <= 1'b0;
 
                         rd_addr <= 4'h0;
                     end
                 endcase
             end else begin    // Data
-                info_rd <= info_rd & (rd_addr == 4'h6) ? 1'b0 : info_rd;
+                conf_rd <= conf_rd & (rd_addr == 4'h6) ? 1'b0 : conf_rd;
                 data_rd <= data_rd & (rd_addr == 4'he) ? 1'b0 : data_rd;
 
-                rd_addr <= (info_rd | data_rd) ? rd_addr + 1'b1 : 4'h0;
+                rd_addr <= (conf_rd | data_rd) ? rd_addr + 1'b1 : 4'h0;
             end
         end
     end

@@ -20,7 +20,7 @@ logic [7:0] spi_byte_data_i;
 logic       reg_rd_en_o;
 logic [3:0] reg_rd_addr_o;
 
-control control (
+control control(
     .clk_i(clk_i),
     .rst_n_i(rst_n_i),
 
