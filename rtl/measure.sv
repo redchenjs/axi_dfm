@@ -76,16 +76,19 @@ begin
         reg_wr_en   <= 1'b0;
         reg_wr_data <= 64'h0000_0000_0000_0000;
     end else begin
-        gate_en  <= gate_sync ? ((gate_cnt == DEFAULT_GATE_TIME_TOTAL) ? 1'b0 : gate_en) : gate_en_i;
-        gate_cnt <= gate_en & gate_sync & (gate_cnt != DEFAULT_GATE_TIME_TOTAL) ? gate_cnt + 1'b1 : 32'h0000_0000;
-
         if (gate_sync) begin
-            gate_sync <= sig_clk_p & ~gate_en ? 1'b0 : gate_sync;
+            gate_en  <= (gate_cnt == DEFAULT_GATE_TIME_TOTAL) ? 1'b0 : gate_en;
+            gate_cnt <= (gate_cnt == DEFAULT_GATE_TIME_TOTAL) ? 32'h0000_0000 : gate_cnt + 1'b1;
+
+            gate_sync <= (sig_clk_p & ~gate_en) ? 1'b0 : gate_sync;
 
             sig_clk_cnt <= sig_clk_p ? sig_clk_cnt + 1'b1 : sig_clk_cnt;
             ref_clk_cnt <= ref_clk_cnt + 1'b1;
         end else begin
-            gate_sync <= sig_clk_p & gate_en ? 1'b1 : gate_sync;
+            gate_en  <= gate_en_i;
+            gate_cnt <= 32'h0000_0000;
+
+            gate_sync <= (sig_clk_p & gate_en) ? 1'b1 : gate_sync;
 
             sig_clk_cnt <= reg_wr_en ? 32'h0000_0000 : sig_clk_cnt;
             ref_clk_cnt <= reg_wr_en ? 32'h0000_0000 : ref_clk_cnt;

@@ -29,9 +29,11 @@ begin
         gate_en  <= 5'b00000;
         gate_cnt <= 32'h0000_0000;
     end else begin
-        gate_sl  <= (gate_en != 5'b01111);
-        gate_en  <= (gate_cnt == DEFAULT_GATE_TIME_SHIFT) ? {gate_en[3:0], gate_sl} : gate_en;
-        gate_cnt <= (gate_cnt != DEFAULT_GATE_TIME_SHIFT) & (gate_en == gate_sync_i) ? gate_cnt + 1'b1 : 32'h0000_0000;
+        if (gate_en == gate_sync_i) begin
+            gate_sl  <= (gate_en != 5'b01111);
+            gate_en  <= (gate_cnt == DEFAULT_GATE_TIME_SHIFT) ? {gate_en[3:0], gate_sl} : gate_en;
+            gate_cnt <= (gate_cnt == DEFAULT_GATE_TIME_SHIFT) ? 32'h0000_0000 : gate_cnt + 1'b1;
+        end
     end
 end
 
