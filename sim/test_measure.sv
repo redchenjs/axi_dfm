@@ -14,7 +14,8 @@ logic rst_n_i;
 
 logic sig_clk_i;
 
-logic gate_en_i;
+logic        gate_en_i;
+logic [31:0] gate_total_i;
 
 logic        reg_wr_en_o;
 logic [63:0] reg_wr_data_o;
@@ -28,6 +29,7 @@ measure measure(
     .sig_clk_i(sig_clk_i),
 
     .gate_en_i(gate_en_i),
+    .gate_total_i(gate_total_i),
 
     .reg_wr_en_o(reg_wr_en_o),
     .reg_wr_data_o(reg_wr_data_o),
@@ -41,7 +43,8 @@ initial begin
 
     sig_clk_i  <= 1'b1;
 
-    gate_en_i <= 1'b1;
+    gate_en_i    <= 1'b1;
+    gate_total_i <= 32'd499;
 
     #2 rst_n_i <= 1'b1;
 end

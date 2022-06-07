@@ -5,6 +5,8 @@
  *      Author: Jack Chen <redchenjs@live.com>
  */
 
+`include "config.sv"
+
 module digital_frequency_meter(
     input logic clk_i,          // clk_i = 12 MHz
     input logic rst_n_i,        // rst_n_i, active low
@@ -94,6 +96,7 @@ startup startup(
     .rst_n_i(sys_rst_n),
 
     .gate_sync_i(gate_sync),
+    .gate_shift_i(DEFAULT_GATE_TIME_SHIFT),
 
     .gate_en_o(gate_en)
 );
@@ -108,6 +111,7 @@ generate
             .sig_clk_i(sig_clk_i),
 
             .gate_en_i(gate_en[i]),
+            .gate_total_i(DEFAULT_GATE_TIME_TOTAL),
 
             .reg_wr_en_o(raw_wr_en[i]),
             .reg_wr_data_o(raw_wr_data[i]),

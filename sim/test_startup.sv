@@ -12,7 +12,8 @@ module test_startup;
 logic clk_i;
 logic rst_n_i;
 
-logic [4:0] gate_sync_i;
+logic  [4:0] gate_sync_i;
+logic [31:0] gate_shift_i;
 
 logic [4:0] gate_en_o;
 
@@ -21,6 +22,7 @@ startup startup(
     .rst_n_i(rst_n_i),
 
     .gate_sync_i(gate_sync_i),
+    .gate_shift_i(gate_shift_i),
 
     .gate_en_o(gate_en_o)
 );
@@ -28,6 +30,8 @@ startup startup(
 initial begin
     clk_i   <= 1'b1;
     rst_n_i <= 1'b0;
+
+    gate_shift_i <= 32'd99;
 
     #2 rst_n_i <= 1'b1;
 end

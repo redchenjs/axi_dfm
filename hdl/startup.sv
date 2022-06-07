@@ -5,13 +5,12 @@
  *      Author: Jack Chen <redchenjs@live.com>
  */
 
-`include "config.sv"
-
 module startup(
     input logic clk_i,
     input logic rst_n_i,
 
-    input logic [4:0] gate_sync_i,
+    input logic  [4:0] gate_sync_i,
+    input logic [31:0] gate_shift_i,
 
     output logic [4:0] gate_en_o
 );
@@ -31,7 +30,7 @@ begin
         gate_en  <= 5'b00000;
         gate_cnt <= 32'h0000_0000;
     end else begin
-        gate_sf <= (gate_sync_i == 5'b00000) | (gate_cnt == DEFAULT_GATE_TIME_SHIFT);
+        gate_sf <= (gate_sync_i == 5'b00000) | (gate_cnt == gate_shift_i);
 
         if (gate_en == gate_sync_i) begin
             gate_sl  <= (gate_en != 5'b01111);
