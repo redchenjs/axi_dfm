@@ -57,6 +57,11 @@ assign signal_done = reg_wr_en;
 always_ff @(posedge s_axi_aclk or negedge s_axi_aresetn)
 begin
     if (!s_axi_aresetn) begin
+        gate_shift <= 32'h0000_0000;
+        gate_total <= 32'h0000_0000;
+
+        reg_rd_data <= 64'h0000_0000_0000_0000;
+
         s_axi_bvalid <= 1'b0;
         s_axi_rvalid <= 1'b0;
 
@@ -65,9 +70,9 @@ begin
         if (s_axi_awready) begin
             case (s_axi_awaddr[7:0])
                 8'h00:
-                    gate_shift <= s_axi_rdata;
+                    gate_shift <= s_axi_wdata;
                 8'h04:
-                    gate_total <= s_axi_rdata;
+                    gate_total <= s_axi_wdata;
                 default:
                     reg_rd_data <= reg_wr_data;
             endcase
