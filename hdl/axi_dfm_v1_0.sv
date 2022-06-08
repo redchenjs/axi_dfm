@@ -85,9 +85,9 @@ begin
                 8'h04:
                     s_axi_rdata <= gate_total;
                 8'h08:
-                    s_axi_rdata <= reg_rd_data[63:32];
-                8'h0C:
                     s_axi_rdata <= reg_rd_data[31:0];
+                8'h0C:
+                    s_axi_rdata <= reg_rd_data[63:32];
                 default:
                     s_axi_rdata <= 32'h0000_0000;
             endcase
