@@ -9,6 +9,9 @@
 
 module test_top;
 
+localparam [31:0] DEFAULT_GATE_TIME_SHIFT = 32'd199;
+localparam [31:0] DEFAULT_GATE_TIME_TOTAL = 32'd999;
+
 logic clk_i;
 logic rst_n_i;
 
@@ -87,6 +90,7 @@ startup startup(
     .rst_n_i(sys_rst_n),
 
     .gate_sync_i(gate_sync),
+    .gate_shift_i(DEFAULT_GATE_TIME_SHIFT),
 
     .gate_en_o(gate_en)
 );
@@ -101,6 +105,7 @@ generate
             .sig_clk_i(sig_clk_i),
 
             .gate_en_i(gate_en[i]),
+            .gate_total_i(DEFAULT_GATE_TIME_TOTAL),
 
             .reg_wr_en_o(raw_wr_en[i]),
             .reg_wr_data_o(raw_wr_data[i]),
